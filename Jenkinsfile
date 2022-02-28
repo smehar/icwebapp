@@ -5,7 +5,7 @@ pipeline{
         IMAGE_TAG = "${BUILD_TAG}"
         USERNAME = "smehar"
         CONTAINER_NAME = "ic-webapp-test"
-        STAGING_HOST = "54.198.246.115"
+        STAGING_HOST = "34.207.185.66"
         //PROD_HOST =""
     }
 
@@ -67,9 +67,17 @@ pipeline{
                 NUSER = "ubuntu"
             }
             steps{
-                withCredentials([sshUserPrivateKey(credentialsId: "54-198-246-115", keyFileVariable: 'keyfile', usernameVariable: 'NUSER')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: "ec2_private_key", keyFileVariable: 'keyfile', usernameVariable: 'NUSER')]) {
                     script{	
                         sh '''
+                           #Install docker
+                           curl -fsSL https://get.docker.com -o get-docker.sh
+                           sh get-docker.sh
+                           sudo usermod -aG docker ubuntu
+                           #Install Docker compose
+                           sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                           sudo chmod +x /usr/local/bin/docker-compose
+                           sleep 10 
                            scp -o StrictHostKeyChecking=no -i ${keyfile} $(pwd)/docker-compose.yml ${NUSER}@${HOST_IP}:/home/ubuntu/docker-compose.yml 
                            ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} cd /home/ubuntu && docker-compose down || true
                            ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} docker-compose up -d
