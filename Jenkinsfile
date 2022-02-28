@@ -56,17 +56,18 @@ pipeline{
         }
         stage ('deploy app on Staging env'){
             agent any
-            when {
+            /*when {
                 expression { GIT_BRANCH == 'origin/master'}
-            }
+            }*/
             environment{
                 HOST_IP = "${STAGING_HOST}"
                 PGADMIN_PORT = "8082"
                 ODOO_PORT = "8081"
                 IC_PORT = "8080"
+                NUSER = "ubuntu"
             }
             steps{
-                withCredentials([sshUserPrivateKey(credentialsId: "ec2_private_key", keyFileVariable: 'keyfile', usernameVariable: 'NUSER')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: "54-198-246-115", keyFileVariable: 'keyfile', usernameVariable: 'NUSER')]) {
                     script{	
                         sh '''
                            scp -o StrictHostKeyChecking=no -i ${keyfile} $(pwd)/docker-compose.yml ${NUSER}@${HOST_IP}:/home/ubuntu/docker-compose.yml 
