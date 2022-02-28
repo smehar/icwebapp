@@ -5,7 +5,7 @@ pipeline{
         IMAGE_TAG = "${BUILD_TAG}"
         USERNAME = "smehar"
         CONTAINER_NAME = "ic-webapp-test"
-        STAGING_HOST = ""
+        STAGING_HOST = "54.198.246.115"
         //PROD_HOST =""
     }
 
@@ -54,7 +54,7 @@ pipeline{
                 }
             }
         }
-       /* stage ('deploy app on Staging env'){
+        stage ('deploy app on Staging env'){
             agent any
             when {
                 expression { GIT_BRANCH == 'origin/master'}
@@ -78,7 +78,7 @@ pipeline{
             }
         }
 
-        stage ('deploy app on Prod env'){
+       /* stage ('deploy app on Prod env'){
             agent any
             when {
                 expression { GIT_BRANCH == 'origin/master'}
