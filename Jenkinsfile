@@ -5,8 +5,8 @@ pipeline{
         IMAGE_TAG = "${BUILD_TAG}"
         USERNAME = "smehar"
         CONTAINER_NAME = "ic-webapp-test"
-        STAGING_HOST = "54.175.114.236"
-        //PROD_HOST ="54.175.114.236"
+        STAGING_HOST = ""
+        //PROD_HOST =""
     }
 
     agent any
