@@ -5,7 +5,7 @@ pipeline{
         IMAGE_TAG = "${sh(script:'awk \'/version/ {sub(/^.* *version/,""); print $2}\' releases.txt', returnStdout: true).trim()}"
         USERNAME = "smehar"
         CONTAINER_NAME = "ic-webapp-test"
-        STAGING_HOST = "34.229.76.180"
+        STAGING_HOST = "107.21.53.212"
         //PROD_HOST ="54.175.114.236"
         ODOO_URL = "${sh(script:'awk \'/ODOO_URL/ {sub(/^.* *ODOO_URL/,""); print $2}\' releases.txt', returnStdout: true).trim()}"
         PGADMIN_URL = "${sh(script:'awk \'/PGADMIN_URL/ {sub(/^.* *PGADMIN_URL/,""); print $2}\' releases.txt', returnStdout: true).trim()}"
