@@ -59,9 +59,9 @@ pipeline{
         }
         stage ('deploy app on Staging env'){
             agent any
-            when {
+            /*when {
                 expression { GIT_BRANCH == 'origin/master'}
-            }
+            }*/
             environment{
                 HOST_IP = "${STAGING_HOST}"
                 PGADMIN_PORT = "8082"
