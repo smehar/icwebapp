@@ -2,11 +2,14 @@ pipeline{
 
     environment{
         IMAGE_NAME = "ic-webapp"
-        IMAGE_TAG = "${BUILD_TAG}"
+        IMAGE_TAG = "${sh(script:'awk \'/version/ {sub(/^.* *version/,""); print $2}\' releases.txt', returnStdout: true).trim()}"
         USERNAME = "smehar"
         CONTAINER_NAME = "ic-webapp-test"
-        STAGING_HOST = "54.175.114.236"
+        STAGING_HOST = "34.229.76.180"
         //PROD_HOST ="54.175.114.236"
+        ODOO_URL = "${sh(script:'awk \'/ODOO_URL/ {sub(/^.* *ODOO_URL/,""); print $2}\' releases.txt', returnStdout: true).trim()}"
+        PGADMIN_URL = "${sh(script:'awk \'/PGADMIN_URL/ {sub(/^.* *PGADMIN_URL/,""); print $2}\' releases.txt', returnStdout: true).trim()}"
+        DEPLOY_APP = "${sh(script:'awk \'/deploy_app/ {sub(/^.* *deploy_app/,""); print $2}\' releases.txt', returnStdout: true).trim()}"
     }
 
     agent any
@@ -54,7 +57,7 @@ pipeline{
                 }
             }
         }
-       /* stage ('deploy app on Staging env'){
+        stage ('deploy app on Staging env'){
             agent any
             when {
                 expression { GIT_BRANCH == 'origin/master'}
@@ -68,17 +71,45 @@ pipeline{
             steps{
                 withCredentials([sshUserPrivateKey(credentialsId: "ec2_private_key", keyFileVariable: 'keyfile', usernameVariable: 'NUSER')]) {
                     script{	
-                        sh '''
-                           scp -o StrictHostKeyChecking=no -i ${keyfile} $(pwd)/docker-compose.yml ${NUSER}@${HOST_IP}:/home/ubuntu/docker-compose.yml 
-                           ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} cd /home/ubuntu && docker-compose down || true
-                           ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} docker-compose up -d
-                        '''
+                        timeout(time: 15, unit: "MINUTES") {
+                                input message: 'Do you want to approve the deploy in production?', ok: 'Yes'
+                        }
+                        if ( env.DEPLOY_APP == "yes"){
+                            sh '''#!/bin/bash
+                                echo "deploy_app=${DEPLOY_APP}"
+                                ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} "echo -e 'HOST_IP=${HOST_IP}\nPGADMIN_PORT=${PGADMIN_PORT}\nODOO_PORT=${ODOO_PORT}\nIC_PORT=${IC_PORT}\nUSERNAME=${USERNAME}\nIMAGE_NAME=${IMAGE_NAME}\nIMAGE_TAG=${IMAGE_TAG}' > /home/ubuntu/.env"
+                                scp -o StrictHostKeyChecking=no -i ${keyfile} $(pwd)/docker-compose.yml ${NUSER}@${HOST_IP}:/home/ubuntu/docker-compose.yml
+                                ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} "docker stop ${CONTAINER_NAME} || true"
+                                ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} "docker rm ${CONTAINER_NAME} || true"
+                                ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} "cd /home/ubuntu && docker-compose down || true"
+                                sleep 5
+                                ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} "cd /home/ubuntu && docker-compose up -d"
+                            '''
+                        }
+                        else if ( env.DEPLOY_APP == "no"){
+                            echo "ODOO_URL = ${env.ODOO_URL} et PGADMIN_URL= ${env.PGADMIN_URL}"
+                            sh '''#!/bin/bash
+                                echo "deploy_app=${DEPLOY_APP}"
+                                scp -o StrictHostKeyChecking=no -i ${keyfile} $(pwd)/docker-compose.yml ${NUSER}@${HOST_IP}:/home/ubuntu/docker-compose.yml
+                                ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} "docker stop ${CONTAINER_NAME} || true"
+                                ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} "docker rm ${CONTAINER_NAME} || true"
+                                ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} "cd /home/ubuntu && docker-compose down || true"
+                                sleep 5
+                                ssh -o StrictHostKeyChecking=no -i ${keyfile} ${NUSER}@${HOST_IP} "docker run -d --name ${CONTAINER_NAME} -p ${IC_PORT}:8080 -e ODOO_URL=${ODOO_URL} -e PGADMIN_URL=${PGADMIN_URL} ${USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} || true"
+                            '''  
+                        }
+
+                        else {
+                            sh 'echo the Deploy_app variable must only be yes or no'
+                            sh 'echo "deploy_app=${DEPLOY_APP}"'
+                        }
+                        
                     }
                 }
             }
         }
 
-        stage ('deploy app on Prod env'){
+        /*stage ('deploy app on Prod env'){
             agent any
             when {
                 expression { GIT_BRANCH == 'origin/master'}
