@@ -119,7 +119,7 @@ pipeline{
                 HOST_IP = "${STAGING_HOST}"
                 PGADMIN_PORT = "8082"
                 ODOO_PORT = "8081"
-                IC_PORT = "8080"
+                IC_PORT = "8086"
             }
             steps{
                 withCredentials([sshUserPrivateKey(credentialsId: "ec2_private_key", keyFileVariable: 'keyfile', usernameVariable: 'NUSER')]) {
