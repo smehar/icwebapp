@@ -32,7 +32,7 @@ pipeline{
                     sh '''
                        docker stop ${CONTAINER_NAME} || true
                        docker rm ${CONTAINER_NAME} || true
-                       docker run -d --name ${CONTAINER_NAME} -p 8085:8080 ${USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+                       docker run -d --name ${CONTAINER_NAME} -p 8086:8080 ${USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
                        sleep 5
                        curl http://localhost:8085 | grep -iq "IC GROUP"
                     '''
